@@ -1,0 +1,414 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.wrap{padding:1.5rem 0;font-family:var(--font-sans)}
+.section-label{font-size:13px;color:var(--color-text-secondary);text-align:center;margin-bottom:8px;letter-spacing:.5px}
+.screens{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
+.phone{width:200px;background:#fff;border-radius:28px;border:2px solid #1B3D6E;overflow:hidden;box-shadow:0 0 0 4px #e8eef6}
+.statusbar{background:#1B3D6E;padding:6px 14px 4px;display:flex;justify-content:space-between;align-items:center}
+.statusbar span{color:#fff;font-size:8px}
+.notch{width:40px;height:6px;background:#0d2444;border-radius:3px;margin:0 auto}
+.screen{min-height:370px;background:#F4F7FB;position:relative}
+.tab-label{text-align:center;font-size:11px;font-weight:500;color:#1B3D6E;padding:6px 0 2px;background:#fff;border-top:1px solid #e0e8f4}
+
+/* Nav bottom */
+.bottomnav{display:flex;background:#fff;border-top:1px solid #e0e8f4;padding:6px 0 4px}
+.navitem{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:7px;color:#94a3b8}
+.navitem.active{color:#1B3D6E}
+.navicon{font-size:15px}
+
+/* Header */
+.appbar{background:#1B3D6E;padding:8px 12px 6px;display:flex;align-items:center;justify-content:space-between}
+.appbar-title{color:#fff;font-size:12px;font-weight:500}
+.appbar-sub{color:#4FC3F7;font-size:8px}
+.avatar{width:22px;height:22px;border-radius:50%;background:#4FC3F7;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:500;color:#fff}
+
+/* Screen 1 – Beranda */
+.hero-card{margin:10px 8px 0;background:#1B3D6E;border-radius:12px;padding:10px 12px}
+.hero-title{color:#fff;font-size:10px;font-weight:500}
+.hero-sub{color:#4FC3F7;font-size:8px;margin-top:1px}
+.hero-cta{margin-top:8px;background:#4FC3F7;color:#fff;border-radius:20px;padding:4px 10px;font-size:8px;font-weight:500;display:inline-block}
+.section-title{font-size:9px;font-weight:500;color:#1B3D6E;margin:8px 8px 4px}
+.job-card{margin:0 8px 6px;background:#fff;border-radius:10px;padding:8px 10px;border:1px solid #e0e8f4}
+.job-top{display:flex;justify-content:space-between;align-items:flex-start}
+.job-title{font-size:9px;font-weight:500;color:#1B3D6E}
+.job-price{font-size:9px;font-weight:500;color:#4FC3F7}
+.job-meta{font-size:7px;color:#94a3b8;margin-top:3px;display:flex;gap:6px;align-items:center}
+.badge{padding:2px 6px;border-radius:10px;font-size:7px}
+.badge-open{background:#e1f5e8;color:#1a7a3c}
+.badge-prog{background:#fff8e1;color:#b07d00}
+.cat-row{display:flex;gap:5px;margin:0 8px 8px;flex-wrap:wrap}
+.cat-chip{background:#fff;border:1px solid #c5d8f0;border-radius:20px;padding:3px 8px;font-size:7px;color:#1B3D6E}
+.cat-chip.active{background:#1B3D6E;color:#fff;border-color:#1B3D6E}
+
+/* Screen 2 – Peta */
+.map-area{height:210px;background:linear-gradient(135deg,#dbeafe 0%,#e0f2fe 100%);position:relative;overflow:hidden}
+.map-grid{position:absolute;inset:0;opacity:.18}
+.map-road-h{position:absolute;height:2px;background:#93c5fd;left:0;right:0}
+.map-road-v{position:absolute;width:2px;background:#93c5fd;top:0;bottom:0}
+.map-block{position:absolute;background:#bfdbfe;border-radius:2px}
+.pin{position:absolute;display:flex;flex-direction:column;align-items:center}
+.pin-dot{width:18px;height:18px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;border:2px solid #fff}
+.pin-dot i{transform:rotate(45deg);font-size:8px;color:#fff}
+.pin-me{position:absolute;width:14px;height:14px;background:#4FC3F7;border-radius:50%;border:3px solid #fff;left:88px;top:105px}
+.pin-pulse{position:absolute;width:36px;height:36px;background:rgba(79,195,247,.15);border-radius:50%;left:79px;top:96px;border:1px solid rgba(79,195,247,.3)}
+.map-card{position:absolute;bottom:8px;left:8px;right:8px;background:#fff;border-radius:10px;padding:8px 10px;border:1px solid #e0e8f4}
+.map-filter{position:absolute;top:8px;left:8px;right:8px;display:flex;gap:5px}
+.mf{background:#fff;border-radius:20px;padding:3px 8px;font-size:7px;color:#1B3D6E;border:1px solid #c5d8f0}
+.mf.active{background:#1B3D6E;color:#fff;border-color:#1B3D6E}
+.radius-ring{position:absolute;width:120px;height:120px;border-radius:50%;border:1.5px dashed rgba(79,195,247,.5);left:32px;top:48px;pointer-events:none}
+
+/* Screen 3 – Detail + Bidding */
+.det-hero{background:#1B3D6E;padding:10px 12px 14px}
+.det-title{color:#fff;font-size:11px;font-weight:500}
+.det-meta{color:#4FC3F7;font-size:8px;margin-top:2px}
+.det-body{margin:-8px 8px 0;background:#fff;border-radius:12px;padding:10px 12px}
+.det-row{display:flex;justify-content:space-between;margin-bottom:5px}
+.det-key{font-size:8px;color:#94a3b8}
+.det-val{font-size:8px;color:#1B3D6E;font-weight:500}
+.divider{height:1px;background:#e0e8f4;margin:6px 0}
+.requester{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.req-av{width:24px;height:24px;border-radius:50%;background:#e8eef6;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:500;color:#1B3D6E}
+.req-name{font-size:8px;font-weight:500;color:#1B3D6E}
+.req-rating{font-size:7px;color:#f59e0b}
+.bid-section{margin:6px 8px 0;background:#EBF5FF;border-radius:10px;padding:8px 10px;border:1px solid #c5d8f0}
+.bid-label{font-size:8px;color:#1B3D6E;font-weight:500;margin-bottom:4px}
+.bid-price{font-size:16px;font-weight:500;color:#1B3D6E}
+.bid-curr{font-size:8px;color:#94a3b8;margin-top:1px}
+.btn-bid{margin:6px 8px 0;background:#1B3D6E;color:#fff;border-radius:20px;padding:7px;text-align:center;font-size:9px;font-weight:500}
+.btn-outline{margin:4px 8px 0;border:1.5px solid #1B3D6E;color:#1B3D6E;border-radius:20px;padding:6px;text-align:center;font-size:9px}
+
+/* Screen 4 – Rating */
+.rating-head{background:#1B3D6E;padding:10px 12px;text-align:center}
+.rating-title{color:#fff;font-size:10px;font-weight:500}
+.rating-sub{color:#4FC3F7;font-size:8px;margin-top:2px}
+.rate-card{margin:8px;background:#fff;border-radius:10px;padding:10px 12px}
+.rate-person{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.rate-av{width:32px;height:32px;border-radius:50%;background:#e8eef6;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#1B3D6E}
+.rate-name{font-size:9px;font-weight:500;color:#1B3D6E}
+.rate-job{font-size:7px;color:#94a3b8}
+.stars{display:flex;gap:4px;margin:6px 0 4px}
+.star{font-size:18px;color:#f59e0b}
+.star.empty{color:#e2e8f0}
+.rate-textarea{width:100%;background:#F4F7FB;border:1px solid #e0e8f4;border-radius:8px;padding:6px 8px;font-size:8px;color:#64748b;margin-top:4px;min-height:40px;resize:none}
+.rate-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+.rate-tag{padding:3px 7px;border-radius:20px;font-size:7px;background:#EBF5FF;color:#1B3D6E;border:1px solid #c5d8f0}
+.rate-tag.sel{background:#1B3D6E;color:#fff;border-color:#1B3D6E}
+.btn-submit{margin:8px 8px 0;background:#4FC3F7;color:#fff;border-radius:20px;padding:7px;text-align:center;font-size:9px;font-weight:500}
+
+/* Screen 5 – Status */
+.status-timeline{margin:10px 8px}
+.st-item{display:flex;gap:8px;margin-bottom:8px}
+.st-dot-wrap{display:flex;flex-direction:column;align-items:center}
+.st-dot{width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:7px;color:#fff;flex-shrink:0}
+.st-dot.done{background:#1a7a3c}
+.st-dot.active{background:#1B3D6E;box-shadow:0 0 0 3px rgba(27,61,110,.2)}
+.st-dot.idle{background:#e0e8f4}
+.st-line{width:2px;background:#e0e8f4;flex:1;margin-top:2px}
+.st-line.done{background:#1a7a3c}
+.st-content{flex:1;padding-bottom:4px}
+.st-title{font-size:9px;font-weight:500;color:#1B3D6E}
+.st-time{font-size:7px;color:#94a3b8}
+.progress-card{margin:6px 8px;background:#fff;border-radius:10px;padding:8px 10px;border:1px solid #e0e8f4}
+.prog-label{font-size:8px;color:#94a3b8;margin-bottom:3px}
+.prog-bar{height:6px;background:#e0e8f4;border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;background:#4FC3F7;border-radius:3px;width:60%}
+.btn-confirm{margin:6px 8px 0;background:#1a7a3c;color:#fff;border-radius:20px;padding:7px;text-align:center;font-size:9px;font-weight:500}
+</style>
+
+<div class="wrap">
+<h2 class="sr-only">Wireframe UI/UX aplikasi LineWork — 5 layar utama: beranda, peta, detail pekerjaan, rating, dan status pekerjaan</h2>
+
+<div class="section-label">WIREFRAME UI/UX — LINEWORK · 5 LAYAR UTAMA</div>
+
+<div class="screens">
+
+<!-- ═══ SCREEN 1: BERANDA ═══ -->
+<div>
+<div class="tab-label">① Beranda</div>
+<div class="phone">
+  <div class="statusbar"><div class="notch"></div><span>9:41</span></div>
+  <div class="screen">
+    <div class="appbar">
+      <div><div class="appbar-title">LineWork</div><div class="appbar-sub">Yogyakarta Selatan</div></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <i class="ti ti-bell" style="color:#4FC3F7;font-size:14px" aria-hidden="true"></i>
+        <div class="avatar">AR</div>
+      </div>
+    </div>
+    <div class="hero-card">
+      <div class="hero-title">Butuh bantuan tenaga?</div>
+      <div class="hero-sub">Post pekerjaan & temukan helper di sekitarmu</div>
+      <div class="hero-cta">+ Post Pekerjaan</div>
+    </div>
+    <div class="section-title">Kategori</div>
+    <div class="cat-row">
+      <div class="cat-chip active"><i class="ti ti-armchair" aria-hidden="true"></i> Angkat Barang</div>
+      <div class="cat-chip">🛒 Belanja</div>
+      <div class="cat-chip">🔧 Umum</div>
+      <div class="cat-chip">+ Lainnya</div>
+    </div>
+    <div class="section-title">Pekerjaan Terdekat</div>
+    <div class="job-card">
+      <div class="job-top">
+        <div class="job-title">Angkat Lemari 2 Pintu</div>
+        <div class="job-price">Rp 75.000</div>
+      </div>
+      <div class="job-meta">
+        <i class="ti ti-map-pin" style="font-size:8px" aria-hidden="true"></i> 0.8 km &nbsp;
+        <span class="badge badge-open">Open</span> &nbsp; ⭐ 4.8
+      </div>
+    </div>
+    <div class="job-card">
+      <div class="job-top">
+        <div class="job-title">Temani Belanja Pasar</div>
+        <div class="job-price">Rp 50.000</div>
+      </div>
+      <div class="job-meta">
+        <i class="ti ti-map-pin" style="font-size:8px" aria-hidden="true"></i> 1.2 km &nbsp;
+        <span class="badge badge-open">Open</span> &nbsp; ⭐ 4.5
+      </div>
+    </div>
+  </div>
+  <div class="bottomnav">
+    <div class="navitem active"><i class="ti ti-home navicon" aria-hidden="true"></i><span>Beranda</span></div>
+    <div class="navitem"><i class="ti ti-map navicon" aria-hidden="true"></i><span>Peta</span></div>
+    <div class="navitem"><i class="ti ti-clipboard-list navicon" aria-hidden="true"></i><span>Tugas</span></div>
+    <div class="navitem"><i class="ti ti-user navicon" aria-hidden="true"></i><span>Profil</span></div>
+  </div>
+</div>
+</div>
+
+<!-- ═══ SCREEN 2: PETA ═══ -->
+<div>
+<div class="tab-label">② Peta Interaktif</div>
+<div class="phone">
+  <div class="statusbar"><div class="notch"></div><span>9:41</span></div>
+  <div class="screen">
+    <div class="appbar">
+      <div class="appbar-title">Cari Pekerjaan</div>
+      <div style="display:flex;gap:6px">
+        <i class="ti ti-adjustments-horizontal" style="color:#4FC3F7;font-size:14px" aria-hidden="true"></i>
+      </div>
+    </div>
+    <div class="map-area">
+      <!-- road grid -->
+      <div class="map-road-h" style="top:40%"></div>
+      <div class="map-road-h" style="top:65%"></div>
+      <div class="map-road-v" style="left:35%"></div>
+      <div class="map-road-v" style="left:62%"></div>
+      <!-- blocks -->
+      <div class="map-block" style="width:38px;height:28px;left:12px;top:20px"></div>
+      <div class="map-block" style="width:28px;height:32px;left:56px;top:15px"></div>
+      <div class="map-block" style="width:42px;height:24px;left:110px;top:22px"></div>
+      <div class="map-block" style="width:30px;height:30px;left:152px;top:18px"></div>
+      <div class="map-block" style="width:36px;height:26px;left:12px;top:130px"></div>
+      <div class="map-block" style="width:44px;height:28px;left:110px;top:135px"></div>
+      <!-- radius ring -->
+      <div class="radius-ring"></div>
+      <!-- me -->
+      <div class="pin-pulse"></div>
+      <div class="pin-me"></div>
+      <!-- pins -->
+      <div class="pin" style="left:28px;top:52px">
+        <div class="pin-dot" style="background:#1B3D6E"><i class="ti ti-briefcase" aria-hidden="true"></i></div>
+        <div style="font-size:6px;background:#1B3D6E;color:#fff;padding:1px 4px;border-radius:4px;margin-top:1px;white-space:nowrap">Rp 75rb</div>
+      </div>
+      <div class="pin" style="left:126px;top:42px">
+        <div class="pin-dot" style="background:#1B3D6E"><i class="ti ti-briefcase" aria-hidden="true"></i></div>
+        <div style="font-size:6px;background:#1B3D6E;color:#fff;padding:1px 4px;border-radius:4px;margin-top:1px;white-space:nowrap">Rp 50rb</div>
+      </div>
+      <div class="pin" style="left:148px;top:122px">
+        <div class="pin-dot" style="background:#4FC3F7"><i class="ti ti-briefcase" aria-hidden="true"></i></div>
+        <div style="font-size:6px;background:#4FC3F7;color:#fff;padding:1px 4px;border-radius:4px;margin-top:1px;white-space:nowrap">Rp 60rb</div>
+      </div>
+      <!-- filter chips -->
+      <div class="map-filter">
+        <div class="mf active">Semua</div>
+        <div class="mf">≤ 1 km</div>
+        <div class="mf">≤ 2 km</div>
+        <div class="mf">Terdekat</div>
+      </div>
+      <!-- preview card -->
+      <div class="map-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div style="font-size:9px;font-weight:500;color:#1B3D6E">Angkat Lemari 2 Pintu</div>
+            <div style="font-size:7px;color:#94a3b8;margin-top:1px"><i class="ti ti-map-pin" style="font-size:8px" aria-hidden="true"></i> 0.8 km · Jl. Kaliurang</div>
+          </div>
+          <div style="font-size:10px;font-weight:500;color:#4FC3F7">Rp 75rb</div>
+        </div>
+        <div style="display:flex;gap:5px;margin-top:5px">
+          <div style="flex:1;background:#1B3D6E;color:#fff;border-radius:20px;padding:4px;text-align:center;font-size:7px">Lihat Detail</div>
+          <div style="flex:1;border:1px solid #1B3D6E;color:#1B3D6E;border-radius:20px;padding:4px;text-align:center;font-size:7px">Navigasi</div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:6px 8px;background:#fff;border-top:1px solid #e0e8f4">
+      <div style="font-size:8px;color:#94a3b8">3 pekerjaan dalam radius <span style="color:#1B3D6E;font-weight:500">2 km</span> dari lokasi Anda</div>
+    </div>
+  </div>
+  <div class="bottomnav">
+    <div class="navitem"><i class="ti ti-home navicon" aria-hidden="true"></i><span>Beranda</span></div>
+    <div class="navitem active"><i class="ti ti-map navicon" aria-hidden="true"></i><span>Peta</span></div>
+    <div class="navitem"><i class="ti ti-clipboard-list navicon" aria-hidden="true"></i><span>Tugas</span></div>
+    <div class="navitem"><i class="ti ti-user navicon" aria-hidden="true"></i><span>Profil</span></div>
+  </div>
+</div>
+</div>
+
+<!-- ═══ SCREEN 3: DETAIL + BIDDING ═══ -->
+<div>
+<div class="tab-label">③ Detail & Bidding</div>
+<div class="phone">
+  <div class="statusbar"><div class="notch"></div><span>9:41</span></div>
+  <div class="screen">
+    <div class="det-hero">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
+        <i class="ti ti-arrow-left" style="color:#4FC3F7;font-size:13px" aria-hidden="true"></i>
+        <span style="color:#4FC3F7;font-size:8px">Kembali ke Peta</span>
+      </div>
+      <div class="det-title">Angkat Lemari 2 Pintu</div>
+      <div class="det-meta"><i class="ti ti-map-pin" style="font-size:8px" aria-hidden="true"></i> Jl. Kaliurang No.5 · 0.8 km dari Anda</div>
+    </div>
+    <div class="det-body">
+      <div class="requester">
+        <div class="req-av">BW</div>
+        <div>
+          <div class="req-name">Budi Wicaksono</div>
+          <div class="req-rating">★★★★★ <span style="color:#94a3b8;font-size:6px">4.8 (23 ulasan)</span></div>
+        </div>
+        <span class="badge badge-open" style="margin-left:auto">Open</span>
+      </div>
+      <div class="divider"></div>
+      <div class="det-row"><span class="det-key">Kategori</span><span class="det-val">Angkat Barang</span></div>
+      <div class="det-row"><span class="det-key">Estimasi durasi</span><span class="det-val">±60 menit</span></div>
+      <div class="det-row"><span class="det-key">Jumlah tenaga</span><span class="det-val">2 orang</span></div>
+      <div class="det-row"><span class="det-key">Pembayaran</span><span class="det-val">COD (tunai)</span></div>
+      <div class="divider"></div>
+      <div style="font-size:8px;color:#94a3b8;margin-bottom:3px">Deskripsi</div>
+      <div style="font-size:8px;color:#1B3D6E;line-height:1.5">Butuh 2 orang untuk memindahkan lemari dari lantai 1 ke lantai 2. Tangga sempit, perlu hati-hati.</div>
+    </div>
+    <div class="bid-section">
+      <div class="bid-label">Tarif yang ditawarkan</div>
+      <div class="bid-price">Rp 75.000</div>
+      <div class="bid-curr">per orang · COD setelah selesai</div>
+    </div>
+    <div class="btn-bid">Ambil Pekerjaan Ini</div>
+    <div class="btn-outline">Navigasi ke Lokasi</div>
+  </div>
+</div>
+</div>
+
+<!-- ═══ SCREEN 4: RATING ═══ -->
+<div>
+<div class="tab-label">④ Beri Rating</div>
+<div class="phone">
+  <div class="statusbar"><div class="notch"></div><span>9:41</span></div>
+  <div class="screen">
+    <div class="rating-head">
+      <i class="ti ti-circle-check" style="color:#4FC3F7;font-size:22px" aria-hidden="true"></i>
+      <div class="rating-title" style="margin-top:4px">Pekerjaan Selesai!</div>
+      <div class="rating-sub">Beri rating untuk Penyedia Jasa</div>
+    </div>
+    <div class="rate-card">
+      <div class="rate-person">
+        <div class="rate-av">SH</div>
+        <div>
+          <div class="rate-name">Sandi Hartono</div>
+          <div class="rate-job">Penyedia Jasa · Angkat Lemari</div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div style="font-size:8px;color:#94a3b8;margin-bottom:3px;margin-top:4px">Seberapa puas Anda?</div>
+      <div class="stars">
+        <span class="star">★</span>
+        <span class="star">★</span>
+        <span class="star">★</span>
+        <span class="star">★</span>
+        <span class="star empty">★</span>
+      </div>
+      <div style="font-size:8px;color:#f59e0b;margin-bottom:6px">Sangat Baik</div>
+      <div style="font-size:8px;color:#94a3b8;margin-bottom:3px">Kesan singkat (opsional)</div>
+      <div class="rate-tags">
+        <div class="rate-tag sel">Tepat waktu</div>
+        <div class="rate-tag sel">Ramah</div>
+        <div class="rate-tag">Cekatan</div>
+        <div class="rate-tag">Amanah</div>
+        <div class="rate-tag">Kuat</div>
+      </div>
+      <textarea class="rate-textarea" placeholder="Tambah ulasan teks..."></textarea>
+    </div>
+    <div class="btn-submit">Kirim Rating</div>
+    <div style="text-align:center;font-size:7px;color:#94a3b8;margin-top:5px;padding:0 8px">Rating tidak dapat diubah setelah dikirim</div>
+  </div>
+</div>
+</div>
+
+<!-- ═══ SCREEN 5: STATUS ═══ -->
+<div>
+<div class="tab-label">⑤ Status Pekerjaan</div>
+<div class="phone">
+  <div class="statusbar"><div class="notch"></div><span>9:41</span></div>
+  <div class="screen">
+    <div class="appbar">
+      <div><div class="appbar-title">Status Pekerjaan</div><div class="appbar-sub">Angkat Lemari 2 Pintu</div></div>
+      <span class="badge badge-prog" style="font-size:7px">In Progress</span>
+    </div>
+    <div class="progress-card">
+      <div class="prog-label">Progress penyelesaian</div>
+      <div class="prog-bar"><div class="prog-fill"></div></div>
+      <div style="display:flex;justify-content:space-between;margin-top:3px">
+        <span style="font-size:7px;color:#94a3b8">Dimulai 09.30</span>
+        <span style="font-size:7px;color:#1B3D6E;font-weight:500">~10.30 selesai</span>
+      </div>
+    </div>
+    <div class="status-timeline">
+      <div class="st-item">
+        <div class="st-dot-wrap">
+          <div class="st-dot done"><i class="ti ti-check" style="font-size:7px" aria-hidden="true"></i></div>
+          <div class="st-line done"></div>
+        </div>
+        <div class="st-content">
+          <div class="st-title">Pekerjaan diposting</div>
+          <div class="st-time">Hari ini, 08.15</div>
+        </div>
+      </div>
+      <div class="st-item">
+        <div class="st-dot-wrap">
+          <div class="st-dot done"><i class="ti ti-check" style="font-size:7px" aria-hidden="true"></i></div>
+          <div class="st-line done"></div>
+        </div>
+        <div class="st-content">
+          <div class="st-title">Penyedia jasa ditemukan</div>
+          <div class="st-time">Hari ini, 09.10 · Sandi H.</div>
+        </div>
+      </div>
+      <div class="st-item">
+        <div class="st-dot-wrap">
+          <div class="st-dot active"><i class="ti ti-loader" style="font-size:7px" aria-hidden="true"></i></div>
+          <div class="st-line"></div>
+        </div>
+        <div class="st-content">
+          <div class="st-title" style="color:#4FC3F7">Pekerjaan berlangsung</div>
+          <div class="st-time">Hari ini, 09.30 — sekarang</div>
+        </div>
+      </div>
+      <div class="st-item">
+        <div class="st-dot-wrap">
+          <div class="st-dot idle"></div>
+        </div>
+        <div class="st-content">
+          <div class="st-title" style="color:#94a3b8">Konfirmasi selesai</div>
+          <div class="st-time">Menunggu konfirmasi kedua pihak</div>
+        </div>
+      </div>
+    </div>
+    <div class="btn-confirm">Konfirmasi Selesai</div>
+    <div class="btn-outline" style="border-color:#e53e3e;color:#e53e3e;margin-top:4px">Ajukan Pembatalan</div>
+  </div>
+</div>
+</div>
+
+</div><!-- /screens -->
+</div>
