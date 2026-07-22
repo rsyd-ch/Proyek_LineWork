@@ -19,15 +19,30 @@ class BidModel {
     required this.createdAt,
   });
 
+  static DateTime? _readDate(dynamic value) {
+    if (value is Timestamp) {
+      return value.toDate();
+    }
+    if (value is DateTime) {
+      return value;
+    }
+    if (value is String) {
+      return DateTime.tryParse(value);
+    }
+    return null;
+  }
+
   factory BidModel.fromJson(Map<String, dynamic> json) {
+    final now = DateTime.now();
+
     return BidModel(
-      id: json['id'] as String,
-      taskId: json['taskId'] as String,
-      providerId: json['providerId'] as String,
-      amount: (json['amount'] as num).toDouble(),
-      message: json['message'] as String,
+      id: json['id'] as String? ?? '',
+      taskId: json['taskId'] as String? ?? '',
+      providerId: json['providerId'] as String? ?? '',
+      amount: (json['amount'] as num?)?.toDouble() ?? 0,
+      message: json['message'] as String? ?? '',
       status: json['status'] as String? ?? 'pending',
-      createdAt: (json['createdAt'] as Timestamp).toDate(),
+      createdAt: _readDate(json['createdAt']) ?? now,
     );
   }
 

@@ -8,6 +8,10 @@ class UserProfile {
   final String? nik;
   final String? ktpUrl;
   final String? phone;
+  final String? photoUrl;
+  final String? cvUrl;
+  final String? contactMethod;
+  final String? publicBio;
   final bool isVerified;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -20,23 +24,46 @@ class UserProfile {
     this.nik,
     this.ktpUrl,
     this.phone,
+    this.photoUrl,
+    this.cvUrl,
+    this.contactMethod,
+    this.publicBio,
     this.isVerified = false,
     required this.createdAt,
     required this.updatedAt,
   });
 
+  static DateTime? _readDate(dynamic value) {
+    if (value is Timestamp) {
+      return value.toDate();
+    }
+    if (value is DateTime) {
+      return value;
+    }
+    if (value is String) {
+      return DateTime.tryParse(value);
+    }
+    return null;
+  }
+
   factory UserProfile.fromJson(Map<String, dynamic> json) {
+    final now = DateTime.now();
+
     return UserProfile(
-      uid: json['uid'] as String,
-      email: json['email'] as String,
+      uid: json['uid'] as String? ?? '',
+      email: json['email'] as String? ?? '',
       name: json['name'] as String?,
       role: json['role'] as String?,
       nik: json['nik'] as String?,
       ktpUrl: json['ktpUrl'] as String?,
       phone: json['phone'] as String?,
+      photoUrl: json['photoUrl'] as String?,
+      cvUrl: json['cvUrl'] as String?,
+      contactMethod: json['contactMethod'] as String?,
+      publicBio: json['publicBio'] as String?,
       isVerified: json['isVerified'] as bool? ?? false,
-      createdAt: (json['createdAt'] as Timestamp).toDate(),
-      updatedAt: (json['updatedAt'] as Timestamp).toDate(),
+      createdAt: _readDate(json['createdAt']) ?? now,
+      updatedAt: _readDate(json['updatedAt']) ?? now,
     );
   }
 
@@ -49,6 +76,10 @@ class UserProfile {
       'nik': nik,
       'ktpUrl': ktpUrl,
       'phone': phone,
+      'photoUrl': photoUrl,
+      'cvUrl': cvUrl,
+      'contactMethod': contactMethod,
+      'publicBio': publicBio,
       'isVerified': isVerified,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),

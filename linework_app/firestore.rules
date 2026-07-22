@@ -1,0 +1,140 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function owns(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function taskOwner(taskId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/tasks/$(taskId))
+        && get(/databases/$(database)/documents/tasks/$(taskId)).data.requesterId == request.auth.uid;
+    }
+
+    function validTaskCreate(taskId) {
+      return request.resource.data.keys().hasOnly([
+          'id',
+          'title',
+          'description',
+          'requesterId',
+          'location',
+          'price',
+          'isCod',
+          'category',
+          'status',
+          'acceptedBidId',
+          'acceptedProviderId',
+          'createdAt',
+          'dueAt',
+          'acceptedAt',
+          'completedAt'
+        ])
+        && request.resource.data.keys().hasAll([
+          'id',
+          'title',
+          'description',
+          'requesterId',
+          'location',
+          'price',
+          'isCod',
+          'category',
+          'status',
+          'createdAt'
+        ])
+        && request.resource.data.id == taskId
+        && request.resource.data.requesterId == request.auth.uid
+        && request.resource.data.title is string
+        && request.resource.data.description is string
+        && request.resource.data.location is latlng
+        && request.resource.data.price is number
+        && request.resource.data.price > 0
+        && request.resource.data.isCod is bool
+        && request.resource.data.category is string
+        && request.resource.data.status == 'open'
+        && request.resource.data.createdAt is timestamp;
+    }
+
+    function validBidCreate(bidId) {
+      let task = get(/databases/$(database)/documents/tasks/$(request.resource.data.taskId));
+      return request.resource.data.keys().hasOnly([
+          'id',
+          'taskId',
+          'providerId',
+          'amount',
+          'message',
+          'status',
+          'createdAt'
+        ])
+        && request.resource.data.keys().hasAll([
+          'id',
+          'taskId',
+          'providerId',
+          'amount',
+          'message',
+          'status',
+          'createdAt'
+        ])
+        && request.resource.data.id == bidId
+        && request.resource.data.providerId == request.auth.uid
+        && request.resource.data.taskId is string
+        && exists(/databases/$(database)/documents/tasks/$(request.resource.data.taskId))
+        && task.data.status == 'open'
+        && task.data.requesterId != request.auth.uid
+        && request.resource.data.amount is number
+        && request.resource.data.amount > 0
+        && request.resource.data.message is string
+        && request.resource.data.status == 'pending'
+        && request.resource.data.createdAt is timestamp;
+    }
+
+    match /users/{userId} {
+      allow create: if owns(userId)
+        && request.resource.data.uid == userId;
+      allow read, update: if owns(userId);
+      allow delete: if false;
+    }
+
+    match /publicProfiles/{userId} {
+      allow read: if true;
+      allow create, update: if owns(userId)
+        && request.resource.data.uid == userId
+        && request.resource.data.keys().hasOnly([
+          'uid',
+          'name',
+          'photoUrl',
+          'cvUrl',
+          'publicBio',
+          'isVerified',
+          'updatedAt'
+        ]);
+      allow delete: if false;
+    }
+
+    match /tasks/{taskId} {
+      allow read: if true;
+      allow create: if signedIn() && validTaskCreate(taskId);
+      allow update, delete: if signedIn()
+        && resource.data.requesterId == request.auth.uid;
+    }
+
+    match /bids/{bidId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && validBidCreate(bidId);
+      allow update: if taskOwner(resource.data.taskId);
+      allow delete: if signedIn()
+        && resource.data.providerId == request.auth.uid;
+    }
+
+    match /ratings/{ratingId} {
+      allow read: if true;
+      allow create: if signedIn()
+        && request.resource.data.fromUserId == request.auth.uid;
+      allow update, delete: if false;
+    }
+  }
+}

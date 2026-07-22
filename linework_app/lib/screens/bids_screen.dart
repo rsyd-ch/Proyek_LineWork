@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:linework_app/models/bid_model.dart';
 import 'package:linework_app/models/task_model.dart';
 import 'package:linework_app/services/auth_service.dart';
 import 'package:linework_app/services/firestore_service.dart';
-import 'package:intl/intl.dart';
+import 'package:linework_app/widgets/user_profile_link.dart';
 import 'package:uuid/uuid.dart';
 
 class BidsScreen extends StatefulWidget {
@@ -16,26 +18,30 @@ class BidsScreen extends StatefulWidget {
 }
 
 class _BidsScreenState extends State<BidsScreen> {
+  final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
   final _messageController = TextEditingController();
   bool _isSubmitting = false;
+  bool _isAccepting = false;
   String? _errorMessage;
 
-  Future<void> _submitBid() async {
-    if (_amountController.text.isEmpty) {
-      setState(() {
-        _errorMessage = 'Harga tawaran wajib diisi.';
-      });
-      return;
-    }
+  int _parseAmount() {
+    final digits = _amountController.text.replaceAll(RegExp(r'[^0-9]'), '');
+    return int.tryParse(digits) ?? 0;
+  }
 
-    final amount = double.tryParse(_amountController.text);
-    if (amount == null || amount <= 0) {
-      setState(() {
-        _errorMessage = 'Harga tawaran harus angka positif.';
-      });
-      return;
-    }
+  String _formatMoney(num value) {
+    return NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    ).format(value);
+  }
+
+  Future<void> _submitBid() async {
+    FocusScope.of(context).unfocus();
+
+    if (!_formKey.currentState!.validate()) return;
 
     setState(() {
       _isSubmitting = true;
@@ -44,14 +50,16 @@ class _BidsScreenState extends State<BidsScreen> {
 
     try {
       final user = AuthService.currentUser;
-      if (user == null) throw Exception('User not authenticated');
+      if (user == null) {
+        throw Exception('User not authenticated');
+      }
 
       const uuid = Uuid();
       final bid = BidModel(
         id: uuid.v4(),
         taskId: widget.task.id,
         providerId: user.uid,
-        amount: amount,
+        amount: _parseAmount().toDouble(),
         message: _messageController.text.trim(),
         status: 'pending',
         createdAt: DateTime.now(),
@@ -62,13 +70,15 @@ class _BidsScreenState extends State<BidsScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tawaran berhasil dikirim!')),
+        const SnackBar(content: Text('Tawaran berhasil dikirim.')),
       );
 
-      Navigator.of(context).pop();
-    } catch (e) {
+      _amountController.clear();
+      _messageController.clear();
+    } catch (_) {
+      if (!mounted) return;
       setState(() {
-        _errorMessage = 'Gagal mengirim tawaran. Coba lagi.';
+        _errorMessage = 'Tawaran belum bisa dikirim. Coba lagi.';
       });
     } finally {
       if (mounted) {
@@ -79,158 +89,226 @@ class _BidsScreenState extends State<BidsScreen> {
     }
   }
 
+  Future<void> _acceptBid(BidModel bid) async {
+    setState(() {
+      _isAccepting = true;
+      _errorMessage = null;
+    });
+
+    try {
+      await FirestoreService.acceptBid(taskId: widget.task.id, bidId: bid.id);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tawaran diterima. Pekerjaan dimulai.')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Tawaran belum bisa diterima. Coba lagi.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isAccepting = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Tawar Pekerjaan'),
-        backgroundColor: const Color(0xFF1B3D6E),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0F7FF),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Detail Pekerjaan',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1B3D6E),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      widget.task.title,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Harga: Rp ${NumberFormat.decimalPattern('id_ID').format(widget.task.price)}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF4FC3F7),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      widget.task.description,
-                      style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Buat Tawaran Anda',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1B3D6E),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _amountController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Harga Tawaran (Rp)',
-                  hintText: 'Contoh: 50000',
-                  border: OutlineInputBorder(),
-                  prefixText: 'Rp ',
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _messageController,
-                maxLines: 4,
-                decoration: const InputDecoration(
-                  labelText: 'Pesan (Opsional)',
-                  hintText: 'Jelaskan mengapa Anda cocok untuk pekerjaan ini...',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              if (_errorMessage != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Text(
+      appBar: AppBar(title: const Text('Penawaran'), elevation: 0),
+      body: StreamBuilder<TaskModel?>(
+        stream: FirestoreService.streamTask(widget.task.id),
+        builder: (context, taskSnapshot) {
+          final task = taskSnapshot.data ?? widget.task;
+          final isOwnTask = task.requesterId == AuthService.currentUser?.uid;
+          final canBid = !isOwnTask && task.status == 'open';
+          final canAcceptBid = isOwnTask && task.status == 'open';
+
+          return SafeArea(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              children: [
+                _TaskSummary(task: task),
+                if (_errorMessage != null && !canBid) ...[
+                  const SizedBox(height: 12),
+                  Text(
                     _errorMessage!,
-                    style: const TextStyle(color: Colors.red),
-                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: colorScheme.error,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
-              ElevatedButton(
-                onPressed: _isSubmitting ? null : _submitBid,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1B3D6E),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
+                ],
+                if (!canBid && !isOwnTask) ...[
+                  const SizedBox(height: 16),
+                  _InfoBox(
+                    icon: Icons.lock_clock_outlined,
+                    title: 'Penawaran ditutup',
+                    message: 'Pekerjaan ini sudah berjalan atau selesai.',
                   ),
-                ),
-                child: _isSubmitting
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Kirim Tawaran', style: TextStyle(fontSize: 16)),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Daftar Tawaran',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1B3D6E),
-                ),
-              ),
-              const SizedBox(height: 12),
-              StreamBuilder<List<BidModel>>(
-                stream: FirestoreService.streamBidsForTask(widget.task.id),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  }
-
-                  final bids = snapshot.data ?? [];
-
-                  if (bids.isEmpty) {
-                    return const Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 32),
-                        child: Text('Belum ada tawaran.'),
+                ],
+                if (canBid) ...[
+                  const SizedBox(height: 16),
+                  Form(
+                    key: _formKey,
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: colorScheme.surface,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: colorScheme.outlineVariant),
                       ),
-                    );
-                  }
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Buat tawaran',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _amountController,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                            decoration: InputDecoration(
+                              labelText: 'Nominal tawaran',
+                              hintText: 'Contoh: 50000',
+                              prefixIcon: const Icon(Icons.sell_outlined),
+                              prefixText: 'Rp ',
+                              border: const OutlineInputBorder(),
+                              filled: true,
+                              fillColor: colorScheme.surface,
+                            ),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Nominal tawaran wajib diisi.';
+                              }
+                              if (_parseAmount() <= 0) {
+                                return 'Nominal tawaran harus lebih dari 0.';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _messageController,
+                            maxLines: 4,
+                            decoration: InputDecoration(
+                              labelText: 'Pesan singkat',
+                              hintText:
+                                  'Contoh: Saya bisa datang sore ini dan membawa alat bantu.',
+                              prefixIcon: const Icon(Icons.chat_bubble_outline),
+                              border: const OutlineInputBorder(),
+                              filled: true,
+                              fillColor: colorScheme.surface,
+                              alignLabelWithHint: true,
+                            ),
+                          ),
+                          if (_errorMessage != null) ...[
+                            const SizedBox(height: 12),
+                            Text(
+                              _errorMessage!,
+                              style: TextStyle(
+                                color: colorScheme.error,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 14),
+                          ElevatedButton.icon(
+                            onPressed: _isSubmitting ? null : _submitBid,
+                            icon: _isSubmitting
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Icon(Icons.send_outlined),
+                            label: Text(
+                              _isSubmitting ? 'Mengirim...' : 'Kirim Tawaran',
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              minimumSize: const Size.fromHeight(48),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 18),
+                Text(
+                  isOwnTask ? 'Tawaran masuk' : 'Tawaran lain',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                StreamBuilder<List<BidModel>>(
+                  stream: FirestoreService.streamBidsForTask(widget.task.id),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(24),
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
 
-                  return Column(
-                    children: bids.map((bid) {
-                      return _BidCard(bid: bid);
-                    }).toList(),
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
+                    if (snapshot.hasError) {
+                      return _InfoBox(
+                        icon: Icons.cloud_off_outlined,
+                        title: 'Tawaran belum bisa dimuat',
+                        message: 'Periksa koneksi Firebase lalu coba lagi.',
+                      );
+                    }
+
+                    final bids = snapshot.data ?? [];
+                    if (bids.isEmpty) {
+                      return _InfoBox(
+                        icon: Icons.inbox_outlined,
+                        title: 'Belum ada tawaran',
+                        message: isOwnTask
+                            ? 'Tawaran dari penyedia jasa akan muncul di sini.'
+                            : 'Kirim tawaran pertama untuk membuka negosiasi.',
+                      );
+                    }
+
+                    return Column(
+                      children: bids.map((bid) {
+                        return _BidCard(
+                          bid: bid,
+                          money: _formatMoney(bid.amount),
+                          canAccept: canAcceptBid && !_isAccepting,
+                          onAccept: () => _acceptBid(bid),
+                        );
+                      }).toList(),
+                    );
+                  },
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -243,59 +321,170 @@ class _BidsScreenState extends State<BidsScreen> {
   }
 }
 
-class _BidCard extends StatelessWidget {
-  final BidModel bid;
+class _TaskSummary extends StatelessWidget {
+  final TaskModel task;
 
-  const _BidCard({required this.bid});
+  const _TaskSummary({required this.task});
 
   @override
   Widget build(BuildContext context) {
-    final statusColor = bid.status == 'pending'
-        ? const Color(0xFFFFF8E1)
-        : bid.status == 'accepted'
-            ? const Color(0xFFE1F5E8)
-            : const Color(0xFFFFE8E8);
-
-    final statusTextColor = bid.status == 'pending'
-        ? const Color(0xFFB07D00)
-        : bid.status == 'accepted'
-            ? const Color(0xFF1A7A3C)
-            : const Color(0xFFC7254E);
+    final colorScheme = Theme.of(context).colorScheme;
+    final money = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    ).format(task.price);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE0E8F4)),
+        color: colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(
+            task.title,
+            style: TextStyle(
+              color: colorScheme.onPrimaryContainer,
+              fontSize: 17,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '$money - ${task.category} - ${task.isCod ? 'COD' : 'Transfer'}',
+            style: TextStyle(
+              color: colorScheme.onPrimaryContainer.withValues(alpha: 0.78),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 10),
+          UserProfileLink(
+            userId: task.requesterId,
+            label: 'Pemberi pekerjaan',
+            compact: true,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoBox extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String message;
+
+  const _InfoBox({
+    required this.icon,
+    required this.title,
+    required this.message,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: colorScheme.outlineVariant),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: colorScheme.primary, size: 34),
+          const SizedBox(height: 10),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BidCard extends StatelessWidget {
+  final BidModel bid;
+  final String money;
+  final bool canAccept;
+  final VoidCallback onAccept;
+
+  const _BidCard({
+    required this.bid,
+    required this.money,
+    required this.canAccept,
+    required this.onAccept,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isPending = bid.status == 'pending';
+    final isAccepted = bid.status == 'accepted';
+
+    final statusColor = isPending
+        ? const Color(0xFFF59E0B)
+        : isAccepted
+        ? const Color(0xFF16A34A)
+        : colorScheme.error;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          UserProfileLink(
+            userId: bid.providerId,
+            label: 'Penawar',
+            compact: true,
+          ),
+          const SizedBox(height: 8),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Rp ${NumberFormat.decimalPattern('id_ID').format(bid.amount)}',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF4FC3F7),
+              Expanded(
+                child: Text(
+                  money,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    color: colorScheme.primary,
+                  ),
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
-                  color: statusColor,
-                  borderRadius: BorderRadius.circular(12),
+                  color: statusColor.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   bid.status.toUpperCase(),
                   style: TextStyle(
                     fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: statusTextColor,
+                    fontWeight: FontWeight.w800,
+                    color: statusColor,
                   ),
                 ),
               ),
@@ -305,16 +494,31 @@ class _BidCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               bid.message,
-              style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12,
+                color: colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
           const SizedBox(height: 8),
           Text(
-            'Ditawarkan: ${DateFormat('dd/MM/yyyy HH:mm').format(bid.createdAt)}',
-            style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+            'Dikirim ${DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(bid.createdAt)}',
+            style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
           ),
+          if (canAccept && bid.status == 'pending') ...[
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
+              onPressed: onAccept,
+              icon: const Icon(Icons.check_circle_outline),
+              label: const Text('Terima Tawaran'),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size.fromHeight(44),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
