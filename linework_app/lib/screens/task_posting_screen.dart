@@ -24,7 +24,6 @@ class _TaskPostingScreenState extends State<TaskPostingScreen> {
   final _priceController = TextEditingController();
 
   String _category = 'Angkut Barang';
-  bool _isCod = true;
   bool _isPosting = false;
   bool _isLoadingLocation = false;
   String? _errorMessage;
@@ -135,7 +134,7 @@ class _TaskPostingScreenState extends State<TaskPostingScreen> {
         requesterId: user.uid,
         location: _selectedLocation!,
         price: _parsePrice().toDouble(),
-        isCod: _isCod,
+        isCod: true,
         category: _category,
         createdAt: DateTime.now(),
       );
@@ -313,36 +312,31 @@ class _TaskPostingScreenState extends State<TaskPostingScreen> {
                 }).toList(),
               ),
               const SizedBox(height: 14),
-              SegmentedButton<bool>(
-                segments: const [
-                  ButtonSegment<bool>(
-                    value: true,
-                    label: Text('COD'),
-                    icon: Icon(Icons.payments_outlined),
-                  ),
-                  ButtonSegment<bool>(
-                    value: false,
-                    label: Text('Transfer'),
-                    icon: Icon(Icons.account_balance_wallet_outlined),
-                  ),
-                ],
-                selected: {_isCod},
-                showSelectedIcon: false,
-                style: SegmentedButton.styleFrom(
-                  backgroundColor: colorScheme.surface,
-                  selectedBackgroundColor: colorScheme.primaryContainer,
-                  selectedForegroundColor: colorScheme.onPrimaryContainer,
-                  foregroundColor: colorScheme.onSurfaceVariant,
-                  side: BorderSide(color: colorScheme.outlineVariant),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                onSelectionChanged: (selection) {
-                  setState(() {
-                    _isCod = selection.first;
-                  });
-                },
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.payments_outlined,
+                      color: colorScheme.onPrimaryContainer,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Pembayaran dilakukan secara COD (Cash on Delivery) saat pekerjaan selesai.',
+                        style: TextStyle(
+                          color: colorScheme.onPrimaryContainer,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               const _SectionTitle(

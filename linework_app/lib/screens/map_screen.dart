@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:intl/intl.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:linework_app/models/task_model.dart';
 import 'package:linework_app/screens/detail_screen.dart';
 import 'package:linework_app/services/firestore_service.dart';
@@ -17,10 +18,9 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  GoogleMapController? _mapController;
+  final MapController _mapController = MapController();
   LatLng? _currentLocation;
   double _radiusKm = 5;
-  bool _codOnly = false;
   bool _isLoadingLocation = true;
   bool _locationUnavailable = false;
 
@@ -32,7 +32,7 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   void dispose() {
-    _mapController?.dispose();
+    _mapController.dispose();
     super.dispose();
   }
 
@@ -59,15 +59,11 @@ class _MapScreenState extends State<MapScreen> {
       _isLoadingLocation = false;
     });
 
-    await _moveCamera(nextLocation, zoom: 14);
+    _moveCamera(nextLocation, zoom: 14);
   }
 
-  Future<void> _moveCamera(LatLng target, {double zoom = 13}) async {
-    await _mapController?.animateCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(target: target, zoom: zoom),
-      ),
-    );
+  void _moveCamera(LatLng target, {double zoom = 13}) {
+    _mapController.move(target, zoom);
   }
 
   void _openTask(TaskModel task) {
@@ -80,8 +76,7 @@ class _MapScreenState extends State<MapScreen> {
     final openTasks = tasks.where((task) {
       final hasLocation =
           task.location.latitude != 0 || task.location.longitude != 0;
-      final matchesCod = !_codOnly || task.isCod;
-      return task.status == 'open' && hasLocation && matchesCod;
+      return task.status == 'open' && hasLocation;
     }).toList();
 
     final currentLocation = _currentLocation;
@@ -112,35 +107,44 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  Set<Marker> _buildMarkers(List<TaskModel> tasks) {
-    final markers = <Marker>{};
+  List<Marker> _buildMarkers(List<TaskModel> tasks) {
+    final markers = <Marker>[];
     final currentLocation = _currentLocation;
 
     if (currentLocation != null) {
       markers.add(
         Marker(
-          markerId: const MarkerId('current-location'),
-          position: currentLocation,
-          icon: BitmapDescriptor.defaultMarkerWithHue(
-            BitmapDescriptor.hueAzure,
+          point: currentLocation,
+          width: 26,
+          height: 26,
+          child: Tooltip(
+            message: 'Lokasi Anda',
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.lightBlueAccent,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 3),
+              ),
+            ),
           ),
-          infoWindow: const InfoWindow(title: 'Lokasi Anda'),
         ),
       );
     }
 
     for (final task in tasks) {
+      final position = LatLng(task.location.latitude, task.location.longitude);
       markers.add(
         Marker(
-          markerId: MarkerId(task.id),
-          position: LatLng(task.location.latitude, task.location.longitude),
-          infoWindow: InfoWindow(
-            title: task.title,
-            snippet: _formatPrice(task.price),
-          ),
-          onTap: () => _moveCamera(
-            LatLng(task.location.latitude, task.location.longitude),
-            zoom: 15,
+          point: position,
+          width: 40,
+          height: 40,
+          alignment: Alignment.topCenter,
+          child: GestureDetector(
+            onTap: () => _moveCamera(position, zoom: 15),
+            child: Tooltip(
+              message: '${task.title}\n${_formatPrice(task.price)}',
+              child: Icon(Icons.location_on, color: _brandColor, size: 38),
+            ),
           ),
         ),
       );
@@ -176,33 +180,32 @@ class _MapScreenState extends State<MapScreen> {
 
         return Stack(
           children: [
-            GoogleMap(
-              initialCameraPosition: CameraPosition(
-                target: initialTarget,
-                zoom: _currentLocation == null ? 11 : 14,
+            FlutterMap(
+              mapController: _mapController,
+              options: MapOptions(
+                initialCenter: initialTarget,
+                initialZoom: _currentLocation == null ? 11 : 14,
               ),
-              padding: const EdgeInsets.only(top: 152, bottom: 238),
-              markers: markers,
-              circles: _currentLocation == null
-                  ? const <Circle>{}
-                  : {
-                      Circle(
-                        circleId: const CircleId('task-radius'),
-                        center: _currentLocation!,
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.example.linework_app',
+                ),
+                if (_currentLocation != null)
+                  CircleLayer(
+                    circles: [
+                      CircleMarker(
+                        point: _currentLocation!,
                         radius: _radiusKm * 1000,
-                        fillColor: _brandColor.withValues(alpha: 0.10),
-                        strokeColor: _brandColor.withValues(alpha: 0.35),
-                        strokeWidth: 2,
+                        useRadiusInMeter: true,
+                        color: _brandColor.withValues(alpha: 0.10),
+                        borderColor: _brandColor.withValues(alpha: 0.35),
+                        borderStrokeWidth: 2,
                       ),
-                    },
-              myLocationButtonEnabled: false,
-              myLocationEnabled: false,
-              zoomControlsEnabled: false,
-              compassEnabled: true,
-              mapToolbarEnabled: false,
-              onMapCreated: (controller) {
-                _mapController = controller;
-              },
+                    ],
+                  ),
+                MarkerLayer(markers: markers),
+              ],
             ),
             SafeArea(
               bottom: false,
@@ -210,7 +213,6 @@ class _MapScreenState extends State<MapScreen> {
                 padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
                 child: _MapControlPanel(
                   radiusKm: _radiusKm,
-                  codOnly: _codOnly,
                   taskCount: tasks.length,
                   isLoadingLocation: _isLoadingLocation,
                   locationUnavailable: _locationUnavailable,
@@ -218,11 +220,6 @@ class _MapScreenState extends State<MapScreen> {
                   onRadiusChanged: (value) {
                     setState(() {
                       _radiusKm = value;
-                    });
-                  },
-                  onCodChanged: (value) {
-                    setState(() {
-                      _codOnly = value;
                     });
                   },
                   onRefreshLocation: _loadCurrentLocation,
@@ -268,24 +265,20 @@ class _MapScreenState extends State<MapScreen> {
 
 class _MapControlPanel extends StatelessWidget {
   final double radiusKm;
-  final bool codOnly;
   final int taskCount;
   final bool isLoadingLocation;
   final bool locationUnavailable;
   final bool hasFirestoreError;
   final ValueChanged<double> onRadiusChanged;
-  final ValueChanged<bool> onCodChanged;
   final VoidCallback onRefreshLocation;
 
   const _MapControlPanel({
     required this.radiusKm,
-    required this.codOnly,
     required this.taskCount,
     required this.isLoadingLocation,
     required this.locationUnavailable,
     required this.hasFirestoreError,
     required this.onRadiusChanged,
-    required this.onCodChanged,
     required this.onRefreshLocation,
   });
 
@@ -368,39 +361,9 @@ class _MapControlPanel extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _RadiusSelector(
-                    value: radiusKm,
-                    onChanged: onRadiusChanged,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                SizedBox(
-                  width: 82,
-                  height: 38,
-                  child: Tooltip(
-                    message: 'Hanya COD',
-                    child: FilterChip(
-                      selected: codOnly,
-                      label: const Text('COD'),
-                      avatar: const Icon(Icons.payments_outlined, size: 16),
-                      showCheckmark: false,
-                      visualDensity: VisualDensity.compact,
-                      labelStyle: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      onSelected: onCodChanged,
-                    ),
-                  ),
-                ),
-              ],
+            _RadiusSelector(
+              value: radiusKm,
+              onChanged: onRadiusChanged,
             ),
             if (locationUnavailable || hasFirestoreError) ...[
               const SizedBox(height: 10),
@@ -725,9 +688,9 @@ class _TaskPreviewCard extends StatelessWidget {
                       icon: Icons.category_outlined,
                       label: task.category,
                     ),
-                    _TaskMetaChip(
+                    const _TaskMetaChip(
                       icon: Icons.payments_outlined,
-                      label: task.isCod ? 'COD' : 'Transfer',
+                      label: 'COD',
                     ),
                   ],
                 ),

@@ -663,11 +663,9 @@ class _JobCard extends StatelessWidget {
                       icon: Icons.category_outlined,
                       label: task.category,
                     ),
-                    _MetaPill(
-                      icon: task.isCod
-                          ? Icons.payments_outlined
-                          : Icons.account_balance_wallet_outlined,
-                      label: task.isCod ? 'COD' : 'Transfer',
+                    const _MetaPill(
+                      icon: Icons.payments_outlined,
+                      label: 'COD',
                     ),
                     _StatusPill(
                       label: isOpen ? 'Terbuka' : task.status.toUpperCase(),

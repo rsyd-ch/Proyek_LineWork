@@ -354,7 +354,7 @@ class _TaskSummary extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '$money - ${task.category} - ${task.isCod ? 'COD' : 'Transfer'}',
+            '$money - ${task.category} - COD',
             style: TextStyle(
               color: colorScheme.onPrimaryContainer.withValues(alpha: 0.78),
               fontWeight: FontWeight.w700,

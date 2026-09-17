@@ -120,7 +120,7 @@ class _DetailScreenState extends State<DetailScreen> {
                         runSpacing: 8,
                         children: [
                           _HeaderPill(label: task.category),
-                          _HeaderPill(label: task.isCod ? 'COD' : 'Transfer'),
+                          const _HeaderPill(label: 'COD'),
                           _HeaderPill(label: _statusLabel(task.status)),
                         ],
                       ),
@@ -348,9 +348,9 @@ class _DetailPanel extends StatelessWidget {
                 'Lat ${task.location.latitude.toStringAsFixed(5)}, Lon ${task.location.longitude.toStringAsFixed(5)}',
           ),
           _DetailRow(label: 'Kategori', value: task.category),
-          _DetailRow(
+          const _DetailRow(
             label: 'Pembayaran',
-            value: task.isCod ? 'COD' : 'Transfer',
+            value: 'COD',
           ),
           _DetailRow(
             label: 'Dibuat',
